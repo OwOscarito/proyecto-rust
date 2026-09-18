@@ -20,15 +20,87 @@ pub enum PenguinAscii {
     SouthWest,
 }
 
+impl PenguinAscii {
+    fn lines(&self) -> Vec<Line<'static>> {
+        match self {
+            PenguinAscii::North => {
+                vec![
+                    Line::from(r"   ╱ ╲"),
+                    Line::from(r"  /   \"),
+                    Line::from(r" ╱     ╲"),
+                    Line::from(r" ▔╰∧∽∧╯▔"),
+                ]
+            }
+
+            PenguinAscii::South => {
+                vec![
+                    Line::from(r"   ╱ ╲"),
+                    Line::from(r"  /•v•\"),
+                    Line::from(r" ╱ ▄▇▄ ╲"),
+                    Line::from(r" ▔╰∧∽∧╯▔"),
+                ]
+            }
+
+            PenguinAscii::East => {
+                vec![
+                    Line::from(r"   ╱ ╲"),
+                    Line::from(r"  /  •>"),
+                    Line::from(r"  ▏ V▆│"),
+                    Line::from(r"  └∼∼∧╯"),
+                ]
+            }
+
+            PenguinAscii::West => {
+                vec![
+                    Line::from(r"   ╱ ╲"),
+                    Line::from(r"  <•  \"),
+                    Line::from(r"  │▆V ▕"),
+                    Line::from(r"  ╰∧∼∼┘"),
+                ]
+            }
+
+            PenguinAscii::NorthEast => {
+                vec![
+                    Line::from(r"   / ╲"),
+                    Line::from(r" ◃/   ╲"),
+                    Line::from(r"  ▏V   ▏"),
+                    Line::from(r"  ▔∧∽^▔"),
+                ]
+            }
+
+            PenguinAscii::NorthWest => {
+                vec![
+                    Line::from(r"   ╱ \"),
+                    Line::from(r"  /   \▹"),
+                    Line::from(r" ▕   V▕"),
+                    Line::from(r"  ▔^∼∧▔"),
+                ]
+            }
+
+            PenguinAscii::SouthEast => {
+                vec![
+                    Line::from(r"   ╱ ╲"),
+                    Line::from(r"  ▂•· \"),
+                    Line::from(r"  │▆ V ▏"),
+                    Line::from(r"   ^∼∧▔"),
+                ]
+            }
+
+            PenguinAscii::SouthWest => {
+                vec![
+                    Line::from(r"   ╱ ╲"),
+                    Line::from(r"  / ·•▂"),
+                    Line::from(r" ▕ V ▆│"),
+                    Line::from(r"  ▔∧∽^"),
+                ]
+            }
+        }
+    }
+}
+
 impl Widget for &PenguinAscii {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let ascii: Paragraph = match self {
-            _ => Paragraph::new(vec![
-                Line::from("(owo)"),
-                Line::from("-----"),
-                Line::from("-----"),
-            ]),
-        };
+        let ascii = Paragraph::new(self.lines());
         ascii.render(area, buf);
     }
 }

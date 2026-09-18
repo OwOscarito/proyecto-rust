@@ -35,7 +35,7 @@ impl AppServer {
         let clients = self.clients.clone();
         tokio::spawn(async move {
             loop {
-                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+                tokio::time::sleep(tokio::time::Duration::from_millis(33)).await;
                 let mut unlocked_app = app.lock().await;
                 unlocked_app.update();
                 for (id, terminal) in clients.lock().await.iter_mut() {
@@ -131,12 +131,12 @@ impl Handler for AppServer {
     /// The client's pseudo-terminal window size has changed.
     async fn window_change_request(
         &mut self,
-        _: ChannelId,
+        channel: ChannelId,
         col_width: u32,
         row_height: u32,
         _: u32,
         _: u32,
-        _: &mut Session,
+        session: &mut Session,
     ) -> Result<(), Self::Error> {
         let rect = Rect {
             x: 0,
@@ -146,7 +146,15 @@ impl Handler for AppServer {
         };
 
         let mut clients = self.clients.lock().await;
-        clients.get_mut(&self.id).unwrap().resize(rect)?;
+        let terminal = clients.get_mut(&self.id).unwrap();
+        terminal.resize(rect)?;
+
+        self.app
+            .lock()
+            .await
+            .resize_room(0, rect.width, rect.height);
+
+        session.channel_success(channel)?;
 
         Ok(())
     }
