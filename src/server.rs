@@ -114,15 +114,14 @@ impl Handler for AppServer {
         data: &[u8],
         session: &mut Session,
     ) -> Result<(), Self::Error> {
-        match data {
-            // Pressing 'q' closes the connection.
-            b"q" => {
-                self.clients.lock().await.remove(&self.id);
-                session.close(channel)?;
-            }
-            _ => {
-                self.app.lock().await.handle_client(self.id, data);
-            }
+        let should_quit = {
+            let mut app = self.app.lock().await;
+            app.handle_client(self.id, data)
+        };
+
+        if should_quit {
+            self.clients.lock().await.remove(&self.id);
+            session.close(channel)?;
         }
 
         Ok(())

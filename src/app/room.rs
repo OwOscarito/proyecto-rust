@@ -1,16 +1,25 @@
 use rand::{Rng, RngExt};
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 use crate::app::penguin::{MoveDirection, PENGUIN_HEIGHT, PENGUIN_WIDTH, Penguin};
 
-pub const ROOM_WIDTH: u16 = 120;
-pub const ROOM_HEIGHT: u16 = 45;
+pub const ROOM_WIDTH: u16 = 100;
+pub const ROOM_HEIGHT: u16 = 30;
+
+#[derive(Debug, Clone)]
+pub struct ChatMessage {
+    pub penguin_id: usize,
+    pub text: String,
+    pub created_at: Instant,
+}
 
 #[derive(Debug)]
 pub struct Room {
     penguins: HashMap<usize, Penguin>, //penguins by key=ID
     width: u16,
     height: u16,
+    chat_messages: Vec<ChatMessage>,
 }
 
 impl Default for Room {
@@ -19,6 +28,7 @@ impl Default for Room {
             penguins: HashMap::new(),
             width: ROOM_WIDTH,
             height: ROOM_HEIGHT,
+            chat_messages: Vec::new(),
         }
     }
 }
@@ -37,8 +47,8 @@ impl Room {
     }
 
     fn random_position(&self) -> (u16, u16) {
-        let max_x = ROOM_WIDTH.saturating_sub(PENGUIN_WIDTH);
-        let max_y = ROOM_HEIGHT.saturating_sub(PENGUIN_HEIGHT);
+        let max_x = ROOM_WIDTH.saturating_sub(PENGUIN_WIDTH + 1);
+        let max_y = ROOM_HEIGHT.saturating_sub(PENGUIN_HEIGHT + 2);
 
         let mut rng = rand::rng();
         let x = rng.random_range(0..=max_x);
@@ -47,13 +57,17 @@ impl Room {
         (x, y)
     }
 
+    pub fn get_penguin(&self, id: usize) -> Option<&Penguin> {
+        self.penguins.get(&id)
+    }
+
     pub fn move_penguin(&mut self, id: usize, direction: MoveDirection) {
         let Some(penguin) = self.penguins.get_mut(&id) else {
             return;
         };
 
-        let max_x = ROOM_WIDTH.saturating_sub(PENGUIN_WIDTH);
-        let max_y = ROOM_HEIGHT.saturating_sub(PENGUIN_HEIGHT);
+        let max_x = ROOM_WIDTH.saturating_sub(PENGUIN_WIDTH + 1);
+        let max_y = ROOM_HEIGHT.saturating_sub(PENGUIN_HEIGHT + 2);
 
         penguin.set_direction(&direction);
 
@@ -88,5 +102,22 @@ impl Room {
 
     pub fn penguin_count(&self) -> usize {
         self.penguins.len()
+    }
+
+    pub fn add_chat_message(&mut self, penguin_id: usize, text: String) {
+        self.chat_messages.push(ChatMessage {
+            penguin_id,
+            text,
+            created_at: Instant::now(),
+        });
+    }
+
+    pub fn chat_messages(&self) -> &[ChatMessage] {
+        &self.chat_messages
+    }
+
+    pub fn update_chat_messages(&mut self) {
+        self.chat_messages
+            .retain(|message| message.created_at.elapsed() < Duration::from_secs(5));
     }
 }

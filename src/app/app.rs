@@ -21,9 +21,16 @@ enum Screen {
 }
 
 #[derive(Debug, Default)]
+struct Chat {
+    input: String,
+    typing: bool,
+}
+
+#[derive(Debug, Default)]
 pub struct App {
     rooms: HashMap<usize, Room>,
     screen: Screen,
+    chats: HashMap<usize, Chat>,
 }
 
 impl App {
@@ -37,6 +44,8 @@ impl App {
         let room = self.rooms.entry(room_id).or_default();
 
         room.add_penguin(id, username.to_string());
+
+        self.chats.insert(id, Chat::default());
     }
 
     pub fn disconnect(&mut self, id: usize) {
@@ -44,9 +53,15 @@ impl App {
         for room in self.rooms.values_mut() {
             room.remove_penguin(id);
         }
+
+        self.chats.remove(&id);
     }
 
-    pub fn update(&mut self) {}
+    pub fn update(&mut self) {
+        for room in self.rooms.values_mut() {
+            room.update_chat_messages();
+        }
+    }
 
     pub fn draw_client(&self, id: usize, frame: &mut Frame) {
         match self.screen {
@@ -103,14 +118,19 @@ impl App {
         frame.render_widget(message, message_area);
     }
 
-    pub fn draw_game(&self, _id: usize, frame: &mut Frame) {
+    pub fn draw_game(&self, id: usize, frame: &mut Frame) {
         let layout = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Length(1), Constraint::Min(5)])
+            .constraints([
+                Constraint::Length(1),
+                Constraint::Min(PENGUIN_HEIGHT),
+                Constraint::Length(1),
+            ])
             .split(frame.area());
 
         let info_area = layout[0];
         let content_area = layout[1];
+        let chat_area = layout[2];
 
         //always 0 for now
         let room_id = 0;
@@ -142,7 +162,8 @@ impl App {
 
         draw_room_border(frame, room_area);
 
-        // The inside of the border is the actual playable area.
+        self.draw_chat_input(id, frame, chat_area);
+
         let playable_area = Rect {
             x: room_area.x + 1,
             y: room_area.y + 1,
@@ -153,6 +174,43 @@ impl App {
         let Some(room) = self.rooms.get(&room_id) else {
             return;
         };
+
+        for message in room.chat_messages() {
+            let Some(penguin) = room.get_penguin(message.penguin_id) else {
+                continue;
+            };
+
+            let (x, y) = penguin.position();
+
+            let penguin_area = Rect {
+                x: playable_area.x + x,
+                y: playable_area.y + y,
+                width: PENGUIN_WIDTH,
+                height: PENGUIN_HEIGHT,
+            };
+
+            let bubble_width = (message.text.len() as u16 + 2).min(30).max(3);
+
+            let bubble_x = penguin_area
+                .x
+                .saturating_add(PENGUIN_WIDTH / 2)
+                .saturating_sub(bubble_width / 2);
+
+            let bubble_y = penguin_area.y.saturating_sub(1);
+
+            let bubble_area = Rect {
+                x: bubble_x,
+                y: bubble_y,
+                width: bubble_width,
+                height: 1,
+            };
+
+            let bubble = Paragraph::new(message.text.as_str())
+                .alignment(Alignment::Center)
+                .style(Style::default().fg(Color::Black).bg(Color::White));
+
+            frame.render_widget(bubble, bubble_area);
+        }
 
         for penguin in room.penguins() {
             let (x, y) = penguin.position();
@@ -168,21 +226,97 @@ impl App {
         }
     }
 
-    pub fn handle_client(&mut self, id: usize, data: &[u8]) {
+    fn draw_chat_input(&self, id: usize, frame: &mut Frame, area: Rect) {
+        let Some(chat) = self.chats.get(&id) else {
+            return;
+        };
+
+        if !chat.typing {
+            return;
+        }
+
+        let line = Line::from(vec![
+            Span::styled(
+                " chat: ",
+                Style::default().fg(Color::Black).bg(Color::White),
+            ),
+            Span::styled(
+                chat.input.as_str(),
+                Style::default().fg(Color::Black).bg(Color::White),
+            ),
+            Span::styled("█", Style::default().fg(Color::Black).bg(Color::White)),
+        ]);
+
+        frame.render_widget(
+            Paragraph::new(line).style(Style::default().bg(Color::White)),
+            area,
+        );
+    }
+
+    pub fn handle_client(&mut self, id: usize, data: &[u8]) -> bool {
         match self.screen {
             Screen::Configuration => {
                 if data == b"\r" || data == b"\n" {
                     self.screen = Screen::Game;
                 }
 
-                return;
+                return false;
             }
 
             Screen::Game => {}
         }
 
+        let Some(chat) = self.chats.get_mut(&id) else {
+            return false;
+        };
+
+        // currently typing
+        if chat.typing {
+            match data {
+                b"\r" | b"\n" => {
+                    let message = std::mem::take(&mut chat.input);
+                    chat.typing = false;
+
+                    if !message.is_empty() {
+                        if let Some(room) = self.rooms.get_mut(&0) {
+                            room.add_chat_message(id, message);
+                        }
+                    }
+                }
+
+                b"\x08" | b"\x7f" => {
+                    chat.input.pop();
+                }
+
+                b"\x1b" => {
+                    chat.input.clear();
+                    chat.typing = false;
+                }
+
+                bytes if bytes.len() == 1 && (bytes[0].is_ascii_graphic() || bytes[0] == b' ') => {
+                    chat.input.push(bytes[0] as char);
+                }
+
+                _ => {}
+            }
+
+            return false;
+        }
+
+        // quit
+        if data == b"q" {
+            return true;
+        }
+
+        // stars typing
+        if data == b"t" {
+            chat.typing = true;
+            return false;
+        }
+
+        // normal movement
         let Some(room) = self.rooms.get_mut(&0) else {
-            return;
+            return false;
         };
 
         match data {
@@ -192,6 +326,8 @@ impl App {
             b"d" => room.move_penguin(id, MoveDirection::Right),
             _ => {}
         }
+
+        false
     }
 }
 
