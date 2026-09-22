@@ -149,11 +149,6 @@ impl Handler for AppServer {
         let terminal = clients.get_mut(&self.id).unwrap();
         terminal.resize(rect)?;
 
-        self.app
-            .lock()
-            .await
-            .resize_room(0, rect.width, rect.height);
-
         session.channel_success(channel)?;
 
         Ok(())

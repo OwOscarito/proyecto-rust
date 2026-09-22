@@ -3,6 +3,9 @@ use std::collections::HashMap;
 
 use crate::app::penguin::{MoveDirection, PENGUIN_HEIGHT, PENGUIN_WIDTH, Penguin};
 
+pub const ROOM_WIDTH: u16 = 120;
+pub const ROOM_HEIGHT: u16 = 45;
+
 #[derive(Debug)]
 pub struct Room {
     penguins: HashMap<usize, Penguin>, //penguins by key=ID
@@ -14,8 +17,8 @@ impl Default for Room {
     fn default() -> Self {
         Self {
             penguins: HashMap::new(),
-            width: 80,
-            height: 24,
+            width: ROOM_WIDTH,
+            height: ROOM_HEIGHT,
         }
     }
 }
@@ -23,23 +26,6 @@ impl Default for Room {
 impl Room {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn resize(&mut self, width: u16, height: u16) {
-        self.width = width;
-        self.height = height;
-
-        let max_x = width.saturating_sub(PENGUIN_WIDTH);
-        let max_y = height.saturating_sub(PENGUIN_HEIGHT);
-
-        for penguin in self.penguins.values_mut() {
-            let (x, y) = penguin.position();
-
-            let x = x.min(max_x);
-            let y = y.min(max_y);
-
-            penguin.set_position(x, y);
-        }
     }
 
     pub fn add_penguin(&mut self, id: usize, username: String) {
@@ -51,8 +37,8 @@ impl Room {
     }
 
     fn random_position(&self) -> (u16, u16) {
-        let max_x = self.width.saturating_sub(PENGUIN_WIDTH);
-        let max_y = self.height.saturating_sub(PENGUIN_HEIGHT);
+        let max_x = ROOM_WIDTH.saturating_sub(PENGUIN_WIDTH);
+        let max_y = ROOM_HEIGHT.saturating_sub(PENGUIN_HEIGHT);
 
         let mut rng = rand::rng();
         let x = rng.random_range(0..=max_x);
@@ -66,8 +52,8 @@ impl Room {
             return;
         };
 
-        let max_x = self.width.saturating_sub(PENGUIN_WIDTH);
-        let max_y = self.height.saturating_sub(PENGUIN_HEIGHT);
+        let max_x = ROOM_WIDTH.saturating_sub(PENGUIN_WIDTH);
+        let max_y = ROOM_HEIGHT.saturating_sub(PENGUIN_HEIGHT);
 
         penguin.set_direction(&direction);
 
