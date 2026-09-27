@@ -7,6 +7,48 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 
+pub const DANCE_FRAMES: [[&str; 4]; 23] = [
+    [r"   ╱ ╲", r"  /•v•\", r" ╱ ▄▇▄ ╲", r" ▔╰∧∽∧╯▔"],
+    [r"   ╱ ╲", r"  / ·•▂", r" ▕ V ▆│", r"  ▔∨∽^'"],
+    [r"   ╱ ╲", r"  ▂•· \", r"  │▆ V ▏", r"   ^∼∨▔"],
+    [r"   ╱ ╲", r"  /•v•\", r" ╱ ▄▇▄ ╲", r" ▔╰∧∽∧╯▔"],
+    [r"   ╱ ╲", r"  ▂•· \", r"  │▆ V ▏", r"   ^∼∧▔"],
+    [r"   ╱ ╲", r"  <•  \", r"  │▆V ▕", r"  ╰∧∼∼┘"],
+    [r"   / ╲", r" ◃/   ╲", r"  ▏V   ▏", r"  ▔∧∽^▔"],
+    [r"   ╱ ╲", r"  /   \", r" ╱     ╲", r" ▔╰∧∽∧╯▔"],
+    [r"   ╱ \", r"  /   \▹", r" ▕   V▕", r"  ▔^∼∧▔"],
+    [r"   ╱ ╲", r"  /   \", r" ╱     ╲", r" ▔╰∧∽∧╯▔"],
+    [r"   / ╲", r" ◃/   ╲", r"  ▏V   ▏", r"  ▔∧∽^▔"],
+    [r"   ╱ ╲", r"  /   \", r" ╱     ╲", r" ▔╰∧∽∧╯▔"],
+    [r"   ╱ \", r"  /   \▹", r" ▕   V▕", r"  ▔^∼∧▔"],
+    [r"   ╱ ╲", r"  /  •>", r"  ▏ V▆│", r"  └∼∼∧╯"],
+    [r"   ╱ ╲", r"  / ·•▂", r" ▕ V ▆│", r"  ▔∧∽^'"],
+    [r"   ╱ ╲", r"  /•v•\", r" ╱ ▄▇▄ ╲", r" ▔╰∧∽∧╯▔"],
+    [r"   ╱ ╲", r"  /•v•\", r"  ▏\▇/▕", r"  ╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•\", r"  \▄╱ ▕", r"  ╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•\", r"  ▏\▇/▕", r"  ╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•\", r"  ▏ ╲▄/", r"  ╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•\", r"  ▏\▇/▕", r"  ╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•\", r"  \▄╱ ▕", r"  ╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•\", r"  ▏\▇/▕", r"  ╰∧∽∧╯"],
+];
+
+#[derive(Debug, Clone, Copy)]
+pub struct DanceFrame(u8);
+
+impl DanceFrame {
+    pub const FIRST: Self = Self(0);
+    pub const FRAME_COUNT: u8 = 23;
+
+    pub fn next(self) -> Self {
+        Self((self.0 + 1) % Self::FRAME_COUNT)
+    }
+
+    pub fn index(self) -> usize {
+        self.0 as usize
+    }
+}
+
 #[derive(Debug, Default)]
 pub enum PenguinAscii {
     North,
@@ -18,6 +60,8 @@ pub enum PenguinAscii {
     NorthWest,
     SouthEast,
     SouthWest,
+
+    Dancing(usize),
 }
 
 impl PenguinAscii {
@@ -94,6 +138,11 @@ impl PenguinAscii {
                     Line::from(r"  ▔∧∽^"),
                 ]
             }
+
+            PenguinAscii::Dancing(frame) => DANCE_FRAMES[*frame]
+                .iter()
+                .map(|line| Line::from(*line))
+                .collect(),
         }
     }
 }

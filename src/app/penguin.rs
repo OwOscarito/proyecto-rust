@@ -1,5 +1,7 @@
 use std::default::Default;
 
+use std::time::{Duration, Instant};
+
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
@@ -7,7 +9,7 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 
-use crate::app::ascii::PenguinAscii;
+use crate::app::ascii::{DANCE_FRAMES, PenguinAscii};
 
 pub const PENGUIN_WIDTH: u16 = 8;
 pub const PENGUIN_HEIGHT: u16 = 5;
@@ -19,13 +21,16 @@ pub enum MoveDirection {
     Right,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Penguin {
     name: String,
     ascii: PenguinAscii,
     room: usize,
     x: u16,
     y: u16,
+    dancing: bool,
+    dance_frame: usize,
+    last_dance_frame: Instant,
 }
 
 // penguin methods
@@ -37,6 +42,9 @@ impl Penguin {
             room,
             x,
             y,
+            dancing: false,
+            dance_frame: 0,
+            last_dance_frame: Instant::now(),
         }
     }
 
@@ -56,6 +64,43 @@ impl Penguin {
             MoveDirection::Left => PenguinAscii::West,
             MoveDirection::Right => PenguinAscii::East,
         };
+    }
+
+    pub fn start_dancing(&mut self) {
+        self.dancing = true;
+        self.dance_frame = 0;
+        self.last_dance_frame = Instant::now();
+        self.ascii = PenguinAscii::Dancing(self.dance_frame);
+    }
+
+    pub fn stop_dancing(&mut self) {
+        self.dancing = false;
+        self.ascii = PenguinAscii::South;
+    }
+
+    pub fn update(&mut self) {
+        // only if dancing
+        if !self.dancing {
+            return;
+        }
+
+        const FRAME_DURATION: Duration = Duration::from_millis(200);
+
+        if self.last_dance_frame.elapsed() >= FRAME_DURATION {
+            const DANCE_FRAME_COUNT: usize = DANCE_FRAMES.len();
+
+            self.dance_frame = (self.dance_frame + 1) % DANCE_FRAME_COUNT;
+            self.ascii = PenguinAscii::Dancing(self.dance_frame);
+            self.last_dance_frame = Instant::now();
+        }
+    }
+
+    pub fn toggle_dancing(&mut self) {
+        if self.dancing {
+            self.stop_dancing();
+        } else {
+            self.start_dancing();
+        }
     }
 }
 

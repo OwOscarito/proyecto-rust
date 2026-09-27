@@ -60,6 +60,7 @@ impl App {
     pub fn update(&mut self) {
         for room in self.rooms.values_mut() {
             room.update_chat_messages();
+            room.update_penguins();
         }
     }
 
@@ -324,6 +325,7 @@ impl App {
             b"a" => room.move_penguin(id, MoveDirection::Left),
             b"s" => room.move_penguin(id, MoveDirection::Down),
             b"d" => room.move_penguin(id, MoveDirection::Right),
+            b"y" => room.toggle_penguin_dance(id),
             _ => {}
         }
 

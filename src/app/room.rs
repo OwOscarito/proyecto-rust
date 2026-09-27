@@ -104,6 +104,12 @@ impl Room {
         self.penguins.len()
     }
 
+    pub fn update_penguins(&mut self) {
+        for penguin in self.penguins.values_mut() {
+            penguin.update();
+        }
+    }
+
     pub fn add_chat_message(&mut self, penguin_id: usize, text: String) {
         self.chat_messages.push(ChatMessage {
             penguin_id,
@@ -119,5 +125,11 @@ impl Room {
     pub fn update_chat_messages(&mut self) {
         self.chat_messages
             .retain(|message| message.created_at.elapsed() < Duration::from_secs(5));
+    }
+
+    pub fn toggle_penguin_dance(&mut self, id: usize) {
+        if let Some(penguin) = self.penguins.get_mut(&id) {
+            penguin.toggle_dancing();
+        }
     }
 }
