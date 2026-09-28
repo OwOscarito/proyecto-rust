@@ -326,6 +326,7 @@ impl App {
             b"s" => room.move_penguin(id, MoveDirection::Down),
             b"d" => room.move_penguin(id, MoveDirection::Right),
             b"y" => room.toggle_penguin_dance(id),
+            b"u" => room.start_penguin_wave(id),
             _ => {}
         }
 

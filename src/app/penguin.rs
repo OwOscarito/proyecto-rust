@@ -5,13 +5,12 @@ use std::time::{Duration, Instant};
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
-    text::Line,
     widgets::{Paragraph, Widget},
 };
 
-use crate::app::ascii::{DANCE_FRAMES, PenguinAscii};
+use crate::app::ascii::{DANCE_FRAMES, PenguinAscii, WAVE_FRAMES};
 
-pub const PENGUIN_WIDTH: u16 = 8;
+pub const PENGUIN_WIDTH: u16 = 9;
 pub const PENGUIN_HEIGHT: u16 = 5;
 
 pub enum MoveDirection {
@@ -29,8 +28,9 @@ pub struct Penguin {
     x: u16,
     y: u16,
     dancing: bool,
-    dance_frame: usize,
-    last_dance_frame: Instant,
+    frame: usize,
+    last_frame: Instant,
+    waving: bool,
 }
 
 // penguin methods
@@ -43,8 +43,9 @@ impl Penguin {
             x,
             y,
             dancing: false,
-            dance_frame: 0,
-            last_dance_frame: Instant::now(),
+            frame: 0,
+            last_frame: Instant::now(),
+            waving: false,
         }
     }
 
@@ -58,6 +59,8 @@ impl Penguin {
     }
 
     pub fn set_direction(&mut self, direction: &MoveDirection) {
+        self.stop_animation();
+
         self.ascii = match direction {
             MoveDirection::Up => PenguinAscii::North,
             MoveDirection::Down => PenguinAscii::South,
@@ -67,10 +70,12 @@ impl Penguin {
     }
 
     pub fn start_dancing(&mut self) {
+        self.stop_animation();
+
         self.dancing = true;
-        self.dance_frame = 0;
-        self.last_dance_frame = Instant::now();
-        self.ascii = PenguinAscii::Dancing(self.dance_frame);
+        self.frame = 0;
+        self.last_frame = Instant::now();
+        self.ascii = PenguinAscii::Dancing(self.frame);
     }
 
     pub fn stop_dancing(&mut self) {
@@ -79,19 +84,32 @@ impl Penguin {
     }
 
     pub fn update(&mut self) {
-        // only if dancing
-        if !self.dancing {
+        if self.dancing {
+            const FRAME_DURATION: Duration = Duration::from_millis(200);
+
+            if self.last_frame.elapsed() >= FRAME_DURATION {
+                const DANCE_FRAME_COUNT: usize = DANCE_FRAMES.len();
+
+                self.frame = (self.frame + 1) % DANCE_FRAME_COUNT;
+                self.ascii = PenguinAscii::Dancing(self.frame);
+                self.last_frame = Instant::now();
+            }
             return;
         }
+        if self.waving {
+            const FRAME_DURATION: Duration = Duration::from_millis(250);
 
-        const FRAME_DURATION: Duration = Duration::from_millis(200);
+            if self.last_frame.elapsed() >= FRAME_DURATION {
+                self.frame = self.frame + 1;
+                if self.frame >= 5 {
+                    self.waving = false;
+                    self.ascii = PenguinAscii::South;
+                    return;
+                }
 
-        if self.last_dance_frame.elapsed() >= FRAME_DURATION {
-            const DANCE_FRAME_COUNT: usize = DANCE_FRAMES.len();
-
-            self.dance_frame = (self.dance_frame + 1) % DANCE_FRAME_COUNT;
-            self.ascii = PenguinAscii::Dancing(self.dance_frame);
-            self.last_dance_frame = Instant::now();
+                self.ascii = PenguinAscii::Waving(self.frame);
+                self.last_frame = Instant::now();
+            }
         }
     }
 
@@ -101,6 +119,19 @@ impl Penguin {
         } else {
             self.start_dancing();
         }
+    }
+
+    pub fn start_waving(&mut self) {
+        self.stop_animation();
+        self.waving = true;
+        self.frame = 0;
+        self.last_frame = Instant::now();
+        self.ascii = PenguinAscii::Waving(self.frame);
+    }
+
+    fn stop_animation(&mut self) {
+        self.stop_dancing();
+        self.waving = false;
     }
 }
 

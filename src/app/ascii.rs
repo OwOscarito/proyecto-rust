@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
@@ -33,21 +31,17 @@ pub const DANCE_FRAMES: [[&str; 4]; 23] = [
     [r"   ╱ ╲", r"  /•v•\", r"  ▏\▇/▕", r"  ╰∧∽∧╯"],
 ];
 
-#[derive(Debug, Clone, Copy)]
-pub struct DanceFrame(u8);
-
-impl DanceFrame {
-    pub const FIRST: Self = Self(0);
-    pub const FRAME_COUNT: u8 = 23;
-
-    pub fn next(self) -> Self {
-        Self((self.0 + 1) % Self::FRAME_COUNT)
-    }
-
-    pub fn index(self) -> usize {
-        self.0 as usize
-    }
-}
+pub const WAVE_FRAMES: [[&str; 4]; 5] = [
+    [r"   ╱ ╲", r"  /•v•`/|", r" ╱ ▄▇▄ /", r" ▔╰∧∽∧╯"],
+    //[r"   ╱ ╲", r"  /•v•`√|", r" ╱ ▄▇▄ /", r" ▔╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•`─7 ", r" ╱ ▄▇▄ ╱", r" ▔╰∧∽∧╯"],
+    //[r"   ╱ ╲", r"  /•v•`√|", r" ╱ ▄▇▄ /", r" ▔╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•`/|", r" ╱ ▄▇▄ /", r" ▔╰∧∽∧╯"],
+    //[r"   ╱ ╲", r"  /•v•`√|", r" ╱ ▄▇▄ /", r" ▔╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•`─7 ", r" ╱ ▄▇▄ ╱", r" ▔╰∧∽∧╯"],
+    //[r"   ╱ ╲", r"  /•v•`√|", r" ╱ ▄▇▄ /", r" ▔╰∧∽∧╯"],
+    [r"   ╱ ╲", r"  /•v•`/|", r" ╱ ▄▇▄ /", r" ▔╰∧∽∧╯"],
+];
 
 #[derive(Debug, Default)]
 pub enum PenguinAscii {
@@ -62,6 +56,7 @@ pub enum PenguinAscii {
     SouthWest,
 
     Dancing(usize),
+    Waving(usize),
 }
 
 impl PenguinAscii {
@@ -140,6 +135,11 @@ impl PenguinAscii {
             }
 
             PenguinAscii::Dancing(frame) => DANCE_FRAMES[*frame]
+                .iter()
+                .map(|line| Line::from(*line))
+                .collect(),
+
+            PenguinAscii::Waving(frame) => WAVE_FRAMES[*frame]
                 .iter()
                 .map(|line| Line::from(*line))
                 .collect(),

@@ -132,4 +132,10 @@ impl Room {
             penguin.toggle_dancing();
         }
     }
+
+    pub fn start_penguin_wave(&mut self, id: usize) {
+        if let Some(penguin) = self.penguins.get_mut(&id) {
+            penguin.start_waving();
+        }
+    }
 }
