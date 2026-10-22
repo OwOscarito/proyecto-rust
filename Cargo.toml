@@ -9,8 +9,5 @@ ratatui = "0.30.2"
 russh = "0.63.1"
 tokio = "1.53.1"
 diesel = { version = "2.2.0", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
-# build libsqlite3 as part of the build process
-# uncomment this line if you run into setup issues
-# libsqlite3-sys = { version = "0.30", features = ["bundled"] }
-dotenvy = "0.15"
 rand = "0.10.2"
+confique = { version = "0.4.0", features = ["toml"] }

@@ -3,11 +3,12 @@ use std::{collections::HashMap, sync::Arc};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::Rect;
 use ratatui::{Terminal, TerminalOptions, Viewport};
-use russh::keys::ssh_key::{Algorithm, PublicKey};
-use russh::server::{Auth, ChannelOpenHandle, Config, Handler, Msg, Server, Session};
+use russh::keys::ssh_key::PublicKey;
+use russh::server::{Auth, ChannelOpenHandle, Handler, Msg, Server, Session};
 use russh::{Channel, ChannelId, Pty};
 use tokio::sync::Mutex;
 
+use crate::config::AppConfig;
 use crate::ssh::TerminalHandle;
 use crate::{app::App, ssh::SshTerminal};
 
@@ -30,7 +31,7 @@ impl AppServer {
         }
     }
 
-    pub async fn run(&mut self) -> Result<(), anyhow::Error> {
+    pub async fn run(&mut self, config: AppConfig) -> Result<(), anyhow::Error> {
         let app = self.app.clone();
         let clients = self.clients.clone();
         tokio::spawn(async move {
@@ -47,17 +48,8 @@ impl AppServer {
                 }
             }
         });
-        let config = Config {
-            inactivity_timeout: Some(std::time::Duration::from_secs(3600)),
-            auth_rejection_time: std::time::Duration::from_secs(3),
-            auth_rejection_time_initial: Some(std::time::Duration::from_secs(0)),
-            keys: vec![
-                russh::keys::PrivateKey::random(&mut rand::rng(), Algorithm::Ed25519).unwrap(),
-            ],
-            nodelay: true,
-            ..Default::default()
-        };
-        self.run_on_address(Arc::new(config), ("0.0.0.0", 2222))
+
+        self.run_on_address(Arc::new(config.russh_config), (config.host, config.port))
             .await?;
         Ok(())
     }

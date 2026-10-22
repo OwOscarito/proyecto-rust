@@ -1,0 +1,13 @@
+# Humbooldti server configuration.
+# Environment variables (HOST, PORT, KEY_FILE_PATH) override these values.
+# Missing values fall back to the defaults below.
+
+# Address the SSH server binds to.
+host = "0.0.0.0"
+
+# Port the SSH server listens on.
+port = 2200
+
+# Path to the SSH host private key (OpenSSH format).
+# If the file does not exist, a new Ed25519 key is generated and saved here.
+key_file_path = "./humboldti_key"
