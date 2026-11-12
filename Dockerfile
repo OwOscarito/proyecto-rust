@@ -21,7 +21,7 @@ WORKDIR /app
 
 COPY --from=builder /build/target/release/humboldti humboldti
 
-ENV HOST=0.0.0.0
-ENV PORT=2222
+EXPOSE 2222/tcp
+EXPOSE 2222/udp
 
 ENTRYPOINT ["/sbin/tini", "--", "/app/humboldti"]
