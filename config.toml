@@ -6,7 +6,7 @@
 host = "0.0.0.0"
 
 # Port the SSH server listens on.
-port = 2200
+port = 2222
 
 # Path to the SSH host private key (OpenSSH format).
 # If the file does not exist, a new Ed25519 key is generated and saved here.
