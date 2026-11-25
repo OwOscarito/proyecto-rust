@@ -133,6 +133,18 @@ impl Penguin {
         self.stop_dancing();
         self.waving = false;
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn room(&self) -> usize {
+        self.room
+    }
+
+    pub fn set_room(&mut self, room: usize) {
+        self.room = room;
+    }
 }
 
 impl<'a> Widget for &Penguin {

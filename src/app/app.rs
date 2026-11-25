@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::app::{
     penguin::{MoveDirection, PENGUIN_HEIGHT, PENGUIN_WIDTH},
-    room::{ROOM_HEIGHT, ROOM_WIDTH, Room},
+    room::{ROOM_NAMES, ROOM_HEIGHT, ROOM_WIDTH, Room},
 };
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -28,7 +28,7 @@ struct Chat {
 
 #[derive(Debug, Default)]
 pub struct App {
-    rooms: HashMap<usize, Room>,
+    world: Room,
     screen: Screen,
     chats: HashMap<usize, Chat>,
 }
@@ -39,29 +39,21 @@ impl App {
     }
 
     pub fn connect(&mut self, id: usize, username: &str) {
+        // Por mientras al ingresas todos se conectan en la misma
         let room_id = 0;
-
-        let room = self.rooms.entry(room_id).or_default();
-
-        room.add_penguin(id, username.to_string());
+        self.world.add_penguin(id, username.to_string(), room_id);
 
         self.chats.insert(id, Chat::default());
     }
 
     pub fn disconnect(&mut self, id: usize) {
-        // change this since the penguin knows its current room?
-        for room in self.rooms.values_mut() {
-            room.remove_penguin(id);
-        }
-
+        self.world.remove_penguin(id);
         self.chats.remove(&id);
     }
 
     pub fn update(&mut self) {
-        for room in self.rooms.values_mut() {
-            room.update_chat_messages();
-            room.update_penguins();
-        }
+        self.world.update_chat_messages();
+        self.world.update_penguins();
     }
 
     pub fn draw_client(&self, id: usize, frame: &mut Frame) {
@@ -133,17 +125,15 @@ impl App {
         let content_area = layout[1];
         let chat_area = layout[2];
 
-        //always 0 for now
-        let room_id = 0;
+        let room_id = match self.world.get_penguin(id) {
+            Some(penguin) => penguin.room(),
+            None => 0,
+        };
 
-        let penguin_count = self
-            .rooms
-            .get(&room_id)
-            .map(|room| room.penguin_count())
-            .unwrap_or(0);
+        let penguin_count = self.world.penguin_count(room_id);
 
         let title = Span::from("humboldti - ");
-        let room = Span::from(format!("room {} - ", room_id));
+        let room = Span::from(format!("room {} - ", ROOM_NAMES[room_id]));
         let count = Span::from(format!("penguins: {}", penguin_count));
 
         let style = Style::default().bg(Color::White).fg(Color::Black);
@@ -172,14 +162,17 @@ impl App {
             height: room_area.height.saturating_sub(2),
         };
 
-        let Some(room) = self.rooms.get(&room_id) else {
-            return;
-        };
+        let room = &self.world;
 
         for message in room.chat_messages() {
             let Some(penguin) = room.get_penguin(message.penguin_id) else {
                 continue;
             };
+
+            // Mostramos los mensajes correspondientes a esa sala
+            if penguin.room() != room_id {
+                continue;
+            }
 
             let (x, y) = penguin.position();
 
@@ -214,6 +207,11 @@ impl App {
         }
 
         for penguin in room.penguins() {
+            // Mostramos los penguinos correspondientes a esa sala
+            if penguin.room() != room_id {
+                continue;
+            }
+
             let (x, y) = penguin.position();
 
             let penguin_area = Rect {
@@ -279,9 +277,7 @@ impl App {
                     chat.typing = false;
 
                     if !message.is_empty() {
-                        if let Some(room) = self.rooms.get_mut(&0) {
-                            room.add_chat_message(id, message);
-                        }
+                        self.world.add_chat_message(id, message);
                     }
                 }
 
@@ -316,9 +312,7 @@ impl App {
         }
 
         // normal movement
-        let Some(room) = self.rooms.get_mut(&0) else {
-            return false;
-        };
+        let room = &mut self.world;
 
         match data {
             b"w" => room.move_penguin(id, MoveDirection::Up),

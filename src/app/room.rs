@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 
 use crate::app::penguin::{MoveDirection, PENGUIN_HEIGHT, PENGUIN_WIDTH, Penguin};
 
+pub const ROOM_NAMES: [&str; 3] = ["Halloween", "Dieciocho", "Navidad"];
 pub const ROOM_WIDTH: u16 = 100;
 pub const ROOM_HEIGHT: u16 = 30;
 
@@ -38,10 +39,10 @@ impl Room {
         Self::default()
     }
 
-    pub fn add_penguin(&mut self, id: usize, username: String) {
+    pub fn add_penguin(&mut self, id: usize, username: String, room: usize) {
         let (x, y) = self.random_position();
 
-        let penguin = Penguin::new(username, 0, x, y);
+        let penguin = Penguin::new(username, room, x, y);
 
         self.penguins.insert(id, penguin);
     }
@@ -62,10 +63,12 @@ impl Room {
     }
 
     pub fn move_penguin(&mut self, id: usize, direction: MoveDirection) {
+        // Pinguino mutable
         let Some(penguin) = self.penguins.get_mut(&id) else {
             return;
         };
 
+        // Posición más a la derecha que es posible llegar
         let max_x = ROOM_WIDTH.saturating_sub(PENGUIN_WIDTH + 1);
         let max_y = ROOM_HEIGHT.saturating_sub(PENGUIN_HEIGHT + 2);
 
@@ -82,26 +85,48 @@ impl Room {
                 penguin.set_position(x, (y + 1).min(max_y));
             }
 
+            // Formas de llegar a los bordes
             MoveDirection::Left => {
-                penguin.set_position(x.saturating_sub(1), y);
+                // Al irme a la izquierda
+                // Aparezco en el escenario en la posición horizontal más grande
+                if x == 0 && penguin.room() > 0 {
+                    penguin.set_room(penguin.room() - 1);
+                    penguin.set_position(max_x, y);
+                } else {
+                    penguin.set_position(x.saturating_sub(1), y);
+                }
             }
 
             MoveDirection::Right => {
-                penguin.set_position((x + 1).min(max_x), y);
+                // Al irme a la derecha y quedan salas
+                if x == max_x && penguin.room() < ROOM_NAMES.len()-1 {
+                    penguin.set_room(penguin.room() + 1);
+                    penguin.set_position(0, y);
+                } else {
+                    penguin.set_position((x + 1).min(max_x), y);
+                }
             }
         }
     }
 
-    pub fn remove_penguin(&mut self, id: usize) {
-        self.penguins.remove(&id);
+    pub fn remove_penguin(&mut self, id: usize) -> Option<Penguin> {
+        // Devolvemos el pinguino
+        self.penguins.remove(&id)
     }
 
     pub fn penguins(&self) -> impl Iterator<Item = &Penguin> {
         self.penguins.values()
     }
 
-    pub fn penguin_count(&self) -> usize {
-        self.penguins.len()
+    pub fn penguin_count(&self, room: usize) -> usize {
+        // Ahora depende de la cantidad que hay en la sala
+        let mut total = 0;
+        for p in self.penguins() {
+            if p.room() == room {
+                total += 1;
+            }
+        }
+        total
     }
 
     pub fn update_penguins(&mut self) {
