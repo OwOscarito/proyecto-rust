@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 use crate::app::penguin::{MoveDirection, PENGUIN_HEIGHT, PENGUIN_WIDTH, Penguin};
 
-pub const ROOM_NAMES: [&str; 3] = ["Halloween", "Dieciocho", "Navidad"];
+pub const ROOM_NAMES: [&str; 3] = ["Halloween", "Navidad", "Año Nuevo"];
 pub const ROOM_WIDTH: u16 = 100;
 pub const ROOM_HEIGHT: u16 = 30;
 

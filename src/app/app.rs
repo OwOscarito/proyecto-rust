@@ -9,6 +9,7 @@ use ratatui::{
 };
 
 use crate::app::{
+    ascii::ROOM_DECORATIONS,
     penguin::{MoveDirection, PENGUIN_HEIGHT, PENGUIN_WIDTH},
     room::{ROOM_NAMES, ROOM_HEIGHT, ROOM_WIDTH, Room},
 };
@@ -162,6 +163,7 @@ impl App {
             height: room_area.height.saturating_sub(2),
         };
 
+        draw_decorations(frame, playable_area, room_id);
         let room = &self.world;
 
         for message in room.chat_messages() {
@@ -325,6 +327,34 @@ impl App {
         }
 
         false
+    }
+}
+
+// Dibujar el/los elementos pertenecientes a la sala room_id
+fn draw_decorations(frame: &mut Frame, area: Rect, room_id: usize) {
+    let buffer = frame.buffer_mut();
+
+    for decoration in ROOM_DECORATIONS[room_id] {
+        let mut y = area.y + decoration.y;
+
+        for line in decoration.lines {
+            let mut x = area.x + decoration.x;
+
+            for ch in line.chars(){
+                if ch == ' '{
+                    x += 1;
+                    continue;
+                }
+
+                if x < buffer.area.width && y < buffer.area.height {
+                    buffer[(x, y)]
+                        .set_char(ch)
+                        .set_style(Style::default().fg(decoration.color));
+                }
+                x += 1;
+            }
+            y += 1;
+        }
     }
 }
 

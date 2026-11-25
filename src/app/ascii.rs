@@ -1,9 +1,12 @@
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
+    style::Color,
     text::Line,
     widgets::{Paragraph, Widget},
 };
+
+use crate::app::room::ROOM_NAMES;
 
 pub const DANCE_FRAMES: [[&str; 4]; 23] = [
     [r"   ╱ ╲", r"  /•v•\", r" ╱ ▄▇▄ ╲", r" ▔╰∧∽∧╯▔"],
@@ -153,3 +156,40 @@ impl Widget for &PenguinAscii {
         ascii.render(area, buf);
     }
 }
+
+// Para agregar a cada sala según su temática
+#[derive(Debug)]
+pub struct Decoration {
+    pub x: u16,
+    pub y: u16,
+    pub color: Color,
+    pub lines: &'static [&'static str],            // Viven en todo el programa
+}
+
+const TOMBSTONE: &[&str] = &[
+    r"  .---.",
+    r"  |RIP|",
+    r"  |   |",
+    r"~~~~~~~~~",
+];
+
+const SNOWMAN: &[&str] = &[
+    r"  _===_",
+    r"  (. .)",
+    r" (  :  )",
+    r"(   :   )",
+];
+
+const FIREWORK: &[&str] = &[
+    r"   . * .   ",
+    r" *       * ",
+    r".    +    .",
+    r" *       * ",
+    r"   ' * '   ",
+];
+
+const HALLOWEEN: &[Decoration] = &[ Decoration { x: 82, y: 24, color: Color::White, lines: TOMBSTONE } ];
+const NAVIDAD: &[Decoration] = &[ Decoration { x: 80, y: 24, color: Color::White, lines: SNOWMAN } ];
+const ANNIO_NUEVO: &[Decoration] = &[ Decoration { x: 12, y: 2, color: Color::White, lines: FIREWORK } ];
+
+pub const ROOM_DECORATIONS: [&[Decoration]; ROOM_NAMES.len()] = [HALLOWEEN, NAVIDAD, ANNIO_NUEVO];
