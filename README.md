@@ -17,7 +17,7 @@ Rust terminal social app inspired in Club Penguin
 - [x] Multiplayer
 - [x] Chat
 - [x] Emotes
-- [ ] Different rooms
+- [x] Different rooms
 - [ ] Penguin Personalization
 - [ ] Penguin data persistence
 
