@@ -10,6 +10,7 @@ Rust terminal social app inspired in Club Penguin
 | t       | open chat |
 | y       | dance     |
 | u       | wave      |
+| c       | change color |
 | q       | quit      |
 
 # Features
@@ -18,7 +19,7 @@ Rust terminal social app inspired in Club Penguin
 - [x] Chat
 - [x] Emotes
 - [x] Different rooms
-- [ ] Penguin Personalization
+- [x] Penguin Personalization
 - [ ] Penguin data persistence
 
 # Run
