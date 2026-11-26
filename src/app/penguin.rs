@@ -6,12 +6,21 @@ use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     widgets::{Paragraph, Widget},
+    style::{Color, Style}
 };
 
 use crate::app::ascii::{DANCE_FRAMES, PenguinAscii, WAVE_FRAMES};
 
 pub const PENGUIN_WIDTH: u16 = 9;
 pub const PENGUIN_HEIGHT: u16 = 5;
+
+const PENGUIN_COLORS: [Color; 5] = [
+    Color::White,
+    Color::Yellow,
+    Color::Cyan,
+    Color::Magenta,
+    Color::Green,
+];
 
 pub enum MoveDirection {
     Up,
@@ -31,6 +40,7 @@ pub struct Penguin {
     frame: usize,
     last_frame: Instant,
     waving: bool,
+    color: usize,
 }
 
 // penguin methods
@@ -46,6 +56,7 @@ impl Penguin {
             frame: 0,
             last_frame: Instant::now(),
             waving: false,
+            color: 0
         }
     }
 
@@ -145,6 +156,10 @@ impl Penguin {
     pub fn set_room(&mut self, room: usize) {
         self.room = room;
     }
+
+    pub fn next_color(&mut self) {
+        self.color = (self.color + 1) % PENGUIN_COLORS.len();
+    }
 }
 
 impl<'a> Widget for &Penguin {
@@ -161,8 +176,10 @@ impl<'a> Widget for &Penguin {
         let name_area = layout[1];
 
         self.ascii.render(sprite_area, buf);
+        buf.set_style(sprite_area, Style::default().fg(PENGUIN_COLORS[self.color]));
 
         let name = Paragraph::new(self.name.as_str()).alignment(ratatui::layout::Alignment::Center);
         name.render(name_area, buf);
+        buf.set_style(name_area, Style::default().fg(PENGUIN_COLORS[self.color]));
     }
 }

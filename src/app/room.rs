@@ -158,6 +158,12 @@ impl Room {
         }
     }
 
+    pub fn change_penguin_color(&mut self, id: usize) {
+        if let Some(penguin) = self.penguins.get_mut(&id) {
+            penguin.next_color();
+        }
+    }
+
     pub fn start_penguin_wave(&mut self, id: usize) {
         if let Some(penguin) = self.penguins.get_mut(&id) {
             penguin.start_waving();
